@@ -1,4 +1,4 @@
-# zonohedra</a>
+# polarzonoid
 
 This is the git repository for the package **polarzonoid** on
 [CRAN](https://cran.r-project.org/package=polarzonoid).
