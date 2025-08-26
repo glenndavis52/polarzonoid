@@ -1,0 +1,318 @@
+---
+title: "Knot or Unknot ?"
+author: "Glenn Davis"
+date: "`r Sys.Date()`"
+
+header-includes:
+#  - \usepackage{amsmath}
+#  - \usepackage{amssymb}
+#  - \usepackage{amsthm}
+  - \usepackage{tikz}
+#  - \usetikzlibrary{matrix,arrows,decorations.pathmorphing}     
+#  - \usepackage{pgfplots}
+   
+#  rmarkdown::html_vignette:
+
+output: 
+  pdf_document:  
+    toc: true
+    toc_depth: 2
+    number_sections: false
+    
+bibliography: bibliography.bib
+
+
+# csl: iso690-numeric-brackets-cs.csl
+csl: personal.csl
+# csl: institute-of-mathematical-statistics.csl
+# csl: transactions-on-mathematical-software.csl
+vignette: >
+  %\VignetteIndexEntry{Knot or Unknot ?}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# old_opt = options( width=144 )
+```
+
+<br><br>
+
+
+# A Natural Question
+
+Let $A_n$ be the space of $n$ _or fewer_
+disjoint arcs in the circle.
+In the special case $n{=}0$, we define $A_0$ to be
+the 2 improper arcs:  the empty arc and the full circle.
+Thus $A_0$ has only 2 points, just like $\mathbb{S}^0 = \{-1,1\}$.
+We have the inclusions:
+
+\begin{center}
+\begin{tikzpicture}[scale=1.75]
+
+\node (A2) at (0,0) {$A_0$};
+\node     at (0.5,0) {$\subseteq$};
+\node (B2) at (1,0) {$A_1$};
+\node     at (1.5,0) {$\subseteq$};
+\node (C2) at (2,0) {$A_2$};
+\node     at (2.5,0) {$\subseteq$};
+\node (D2) at (3,0) {$...$};
+\node     at (3.5,0) {$\subseteq$};
+\node (E2) at (4,0) {$A_n$};
+\node     at (4.5,0) {$\subseteq$};
+\node (F2) at (5,0) {$A_{n+1}$};
+\node     at (5.5,0) {$\subseteq$};
+\node (G2) at (6,0) {$...$};
+\end{tikzpicture}
+\end{center}
+
+We make $A_n$ into a metric space as follows.
+Let $V$ and $W$ be collections of disjoint arcs in $A_n$, so $V , W \subseteq \mathbb{S}^1$.
+Let $\mathbf{1}_{V}$ and  $\mathbf{1}_{W}$ be the indicator functions
+for $V$ and $W$.
+Define the metric
+$d(V,W) := \int_{\mathbb{S}^1} \lvert \mathbf{1}_{V} - \mathbf{1}_{W} \rvert d\theta$.
+So $A_n$ can be regarded as a subset of $L^1(\mathbb{S}^1)$ and it inherits a metric from that.
+The metric can be viewed in another way; the symmetric difference of $V$ and $W$ is
+also a collection of arcs, and $d(V,W)$ is the total length of the arcs in this
+symmetric difference.
+The corresponding functions in the package are `arcsdistance()` and `arcssymmdiff()`.
+
+In the [**User Guide**](../vignettes/polarzonoid-guide.html) vignette
+it is shown that there are homeomorphisms
+\begin{equation}
+A_n  ~~ \longleftrightarrow  ~~  \partial Z_n ~~ \longleftrightarrow ~~ \mathbb{S}^{2n}
+\end{equation}
+where $Z_n$ is the polar zonoid in $\mathbb{R}^{2n+1}$.
+These inclusions and homeomorphisms induce embeddings
+$\mathbb{S}^{2n} \hookrightarrow \mathbb{S}^{2n+2}$
+in this large commutative diagram.
+
+\begin{center}
+\begin{tikzpicture}[scale=1.75]
+
+\node (A2) at (0,2) {$A_0$};
+\node     at (0.5,2) {$\subseteq$};
+\node (B2) at (1,2) {$A_1$};
+\node     at (1.5,2) {$\subseteq$};
+\node (C2) at (2,2) {$A_2$};
+\node     at (2.5,2) {$\subseteq$};
+\node (D2) at (3,2) {$...$};
+\node     at (3.5,2) {$\subseteq$};
+\node (E2) at (4,2) {$A_n$};
+\node     at (4.5,2) {$\subseteq$};
+\node (F2) at (5,2) {$A_{n+1}$};
+\node     at (5.5,2) {$\subseteq$};
+\node (G2) at (6,2) {$...$};
+
+
+\node (A1) at (0,1) {$\partial Z_0$};
+\node     at (0.5,1) {$\hookrightarrow$};
+\node (B1) at (1,1) {$\partial Z_1$};
+\node     at (1.5,1) {$\hookrightarrow$};
+\node (C1) at (2,1) {$\partial Z_2$};
+\node     at (2.5,1) {$\hookrightarrow$};
+\node (D1) at (3,1) {$...$};
+\node     at (3.5,1) {$\hookrightarrow$};
+\node (E1) at (4,1) {$\partial Z_n$};
+\node     at (4.5,1) {$\hookrightarrow$};
+\node (F1) at (5,1) {$\partial Z_{n+1}$};
+\node     at (5.5,1) {$\hookrightarrow$};
+\node (G1) at (6,1) {$...$};
+
+
+\node (A0) at (0,0) {$\mathbb{S}^0$};
+\node     at (0.5,0) {$\hookrightarrow$};
+\node (B0) at (1,0) {$\mathbb{S}^2$};
+\node     at (1.5,0) {$\hookrightarrow$};
+\node (C0) at (2,0) {$\mathbb{S}^4$};
+\node     at (2.5,0) {$\hookrightarrow$};
+\node (D0) at (3,0) {$...$};
+\node     at (3.5,0) {$\hookrightarrow$};
+\node (E0) at (4,0) {$\mathbb{S}^{2n}$};
+\node     at (4.5,0) {$\hookrightarrow$};
+\node (F0) at (5,0) {$\mathbb{S}^{2n+2}$};
+\node     at (5.5,0) {$\hookrightarrow$};
+\node (G0) at (6,0) {$...$};
+
+\draw [<->] (A0) to (A1);
+\draw [<->] (A1) to (A2);
+\draw [<->] (B0) to (B1);
+\draw [<->] (B1) to (B2);
+\draw [<->] (C0) to (C1);
+\draw [<->] (C1) to (C2);
+\draw [<->] (E0) to (E1);
+\draw [<->] (E1) to (E2);
+\draw [<->] (F0) to (F1);
+\draw [<->] (F1) to (F2);
+
+\end{tikzpicture}
+\end{center}
+
+The embeddings in the middle row are induced from the
+inclusions on the top row.
+The middle row is almost surely a Whitney stratification,
+see @WhitneyStratification, but I have not checked this.
+The embeddings in the bottom row are induce from those
+in the middle row.
+We will soon see that the embedding
+\begin{equation}\label{embedding}
+\mathbb{S}^{2n} \hookrightarrow \mathbb{S}^{2n+2}
+\end{equation}
+is *not* the standard one, which is formed by appending two zeros.
+The codimension is 2,
+which is the only codimension where knotting of spheres occurs
+(at least in the PL category, see @Zeeman1963).
+So it is natural to ask:
+\begin{center}
+Q: Is the embedding $\mathbb{S}^{2n} \hookrightarrow \mathbb{S}^{2n+2}$ unknotted ?
+\end{center}
+i.e. is it isotopic to the standard embedding
+$\mathbb{S}^{2n} \subseteq \mathbb{S}^{2n+2}$ ?
+
+
+
+\medskip
+
+# Unknot
+
+In this section we show that the embedding (\ref{embedding}) is *not* knotted.
+For the purposes of this vignette, we use the standard order
+for the basis of the trigonometric polynomials:
+\begin{equation}
+1, \cos(\theta),\sin(\theta), \cos(2\theta),\sin(2\theta),  ... ,\cos(n\theta),\sin(n\theta)  ~~~~~~~~ \theta \in [0,2\pi]
+\end{equation}
+and put $1$ at the beginning instead of the end,
+as in the **polarzonoid** package.
+
+This embedding is the composition:
+\begin{equation}\label{comp1}
+\mathbb{S}^{2n}  ~~  \to  ~~  \partial Z_n ~~ \hookrightarrow  ~~ \partial Z_{n+1} ~~ \to ~~ \mathbb{S}^{2n+2}
+\end{equation}
+Focus first on the middle embedding, which is the composition:
+\begin{equation}\label{comp2}
+\partial Z_n ~~ \to ~~  A_n  ~~ \subseteq  ~~  A_{n+1} ~~ \to  ~~ \partial Z_{n+1}
+\end{equation}
+If a point $p \in \partial Z_n$ maps to a set of disjoint arcs $a \in A_n$,
+then this composition (\ref{comp2}) is:
+\begin{equation}
+p ~~ \mapsto ~~ \left( ~ p, \int_{a} \cos( (n+1)\theta ) d\theta ,  \int_{a} \sin( (n+1)\theta ) d\theta ~ \right)
+\end{equation}\label{comp3}
+And since $a$ is a function of $p$, (\ref{comp3}) can be written:
+\begin{equation}\label{compv}
+p ~~ \mapsto ~~ \left( ~ p, ~ v(p) ~ \right) ~~~~ \text{for a function} ~ v : \partial Z_n \to \mathbb{R}^2
+\end{equation}
+Returning now to (\ref{comp1}), it is convenient to translate 
+$\partial Z_n$ and $\partial Z_{n+1}$ so their centers are at 0.
+The center of $\partial Z_n$ is $(\pi, 0, ... , 0)$ so only the first coordinate
+is changed, and (\ref{compv}) is still valid.
+Denoting the centered sets by adding a prime $'$, the composition is now
+\begin{equation}\label{comp4}
+\mathbb{S}^{2n}  ~~  \to  ~~  \partial Z_n' ~~ \hookrightarrow  ~~ \partial Z_{n+1}' ~~ \to ~~ \mathbb{S}^{2n+2}
+\end{equation}
+After these translations, the first and last maps are simple multiplication and
+division by positive real functions, and (\ref{comp4}) is:
+\begin{equation}
+u ~~ \mapsto ~~ \left( ~ \alpha(u) u, v( \alpha(u) u ) ~ \right)
+~/~  \left(  \alpha^2(u) + \lvert v( \alpha(u) u ) \rvert ^2 ~ \right) ^{1/2} ~~~~~  \text{where} ~~ |u|=1  ~~ \text{and}  ~~ \alpha(u) > 0
+\end{equation}
+This can be simplified to
+\begin{equation}\label{form}
+u ~~ \mapsto ~~ \left( ~ \beta(u) u, ~ w(u) ~ \right) ~~~~~  \text{where} ~~ \beta(u) > 0 ~~ \text{and} ~~ w(u) \in \mathbb{R}^2 ~~ \text{and} ~~ \lvert w(u) \rvert < 1
+\end{equation}
+We are done if we can show:
+
+**Theorem:**
+Any embedding $f : \mathbb{S}^{2n} \hookrightarrow \mathbb{S}^{2n+2}$ that has the form
+\begin{equation}
+f(u) ~ = ~ \left( ~ \beta(u) u, ~ w(u) ~ \right) ~~~~~  \text{where} ~~ \beta(u) > 0 ~~ \text{and} ~~ w(u) \in \mathbb{R}^2 ~~ \text{and} ~~ \lvert w(u) \rvert < 1
+\end{equation}
+is isotopic to the standard embedding.
+
+**Proof:**
+First note that $\beta(u)$ and $w(u)$ are not independent of each other.
+In fact we have:
+\begin{equation}
+1 ~=~ {\lvert f(u) \rvert}^2 ~=~ \beta(u)^2 \cdot 1^2 ~+~ {\lvert w(u) \rvert} ^2
+\end{equation}
+and so $\beta(u) = { \left( 1 - {\lvert w(u) \rvert} ^2 \right) }^{1/2}$
+and $f$ depends only on $w : \mathbb{S}^{2n+2} \to \mathbb{R}^2$.
+Now $\mathbb{R}^2$ is contractible so $w$ is homotopic to the 0 map.
+In fact, if we let the homotopy parameter be $t \in [0,1]$,
+we can define $w_t(u) := (1-t) w(u)$.
+Note that $w_1$ is the 0 map,
+and we always have $\lvert w_t(u) \rvert < 1$.
+So each intermediate $w_t$ defines an intermediate $f_t$, which is an embedding.
+And the final $f_1$ is the standard embedding: $f_1(u) = (u,0,0)$.
+$\square$
+
+
+
+\medskip
+
+# Some Sample Calculations
+
+```{r, echo=TRUE}
+library( polarzonoid )
+```
+
+In this section, we verify that the induced embedding
+$\mathbb{S}^6 ~ \hookrightarrow ~ \mathbb{S}^8$ has the correct form (\ref{form}),
+for a few test cases.
+Since the software functions put the constant term last (instead of first)
+the indexes for $\mathbb{S}^6$ are 1,2,3,4,5,6,9 (omitting 7 and 8).
+
+```{r, echo=TRUE}
+idx = c(1:6,9)
+
+#  make a random unit vector in S^6
+set.seed(0)
+u = rnorm(7) ;  u = u / sqrt( sum(u^2) )
+# embed into S^8
+up = spherefromarcs( arcsfromsphere(u), n=4 )
+beta = up[idx] / u ; beta
+range( diff(beta) )
+```
+So all the relevant coordinates are scaled by the same number, up to numerical truncation.
+
+Now repeat this test many times.
+```{r, echo=TRUE}
+count = 50
+umat = array( rnorm(count*7), dim=c(count,7) )
+umat = umat / sqrt( rowSums(umat^2) )
+upmat = t( apply( umat, 1, function(u) { spherefromarcs( arcsfromsphere(u), n=4 ) } ) )
+betamat = upmat[ ,idx] / umat
+delta = apply( betamat, 1, diff )
+range( delta )
+```
+Once again, the relevant coordinates are scaled by the same number, up to numerical truncation.
+
+
+
+\medskip
+
+# References
+
+<div id="refs"></div>
+
+
+
+
+
+\medskip
+
+# Session Information
+
+This document was prepared
+`r format(Sys.Date(), "%a %b %d, %Y")`
+with the following configuration:
+
+```
+```{r, echo=FALSE, results='asis'}
+# options(old_opt)
+sessionInfo()
+```
+```
+

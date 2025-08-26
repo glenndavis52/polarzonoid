@@ -1,0 +1,349 @@
+---
+title: "Paths in the Space of Arcs"
+author: "Glenn Davis"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+bibliography: bibliography.bib
+
+# csl: iso690-numeric-brackets-cs.csl
+csl: personal.csl
+# csl: institute-of-mathematical-statistics.csl
+# csl: transactions-on-mathematical-software.csl
+vignette: >
+  %\VignetteIndexEntry{Paths in the Space of Arcs}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+
+```{css, echo=FALSE}
+body {
+  max-width: 725px;     /* make wider, default is 700px */
+}
+h1{
+  font-size: 20pt;    /* make the level 1 headers smaller */
+}
+```
+
+<script>
+function ToggleDiv(ID) {
+  var D = document.getElementById("D-" + ID);
+  var B = document.getElementById("B-" + ID);
+  if (D.style.display === "none") {
+    // open the div and change button text
+    D.style.display = "block";
+    B.innerText = "Hide " + ID;
+  } else {
+    // close the div and change button text
+    D.style.display = "none";
+    B.innerText = "Show " + ID;
+  }
+}
+</script>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+old_opt = options( width=144 )
+```
+
+<br><br>
+
+# Introduction
+
+```{r, echo=TRUE, message=FALSE}
+library(polarzonoid)
+```
+In the [User Guide](../vignettes/polarzonoid-guide.html) vignette
+it is shown that there is are homeomorphisms
+\begin{equation}
+A_n  ~~ \longleftrightarrow  ~~ \partial Z_n ~~ \longleftrightarrow ~~ \mathbb{S}^{2n}
+\end{equation}
+where $A_n$ is the space of $n$ or fewer pairwise disjoint arcs in the circle,
+and $Z_n$ is the polar zonoid in $\mathbb{R}^{2n+1}$.
+
+In this vignette, we take some easily-defined paths in the sphere $\mathbb{S}^{2n}$,
+compute the corresponding paths in the space of arcs $A_n$,
+and display those paths as animated WebM video plots.
+We make these plots with help of the package **av** and this function:
+
+<button id="B-WebMfromarclist()" onclick="ToggleDiv('WebMfromarclist()')">
+Show WebMfromarclist()</button>
+<div id="D-WebMfromarclist()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+
+WebMfromarclist <- function( arclist, arcmat, index, framerate=2, vpsize=c(480,480) )
+    {
+    requireNamespace( 'av', quietly=TRUE )
+
+    # make temp folder
+    pathtemp = tempdir()   # "./figs"     ;   if( ! file.exists(pathtemp) ) dir.create(pathtemp)
+    count   = length( arclist )
+    namevec = names( arclist )
+
+    for( k in 1:count )
+        {
+        filename    = sprintf( "%s/plot%03d.png", pathtemp, k )
+        png( filename=filename, width=vpsize[1], height=vpsize[2], units = "px" )
+        u   = spherefromarcs( arclist[[k]] )
+        plotarcs( arclist[[k]], labels=FALSE, margintext=namevec[k] )
+        plotarcs( arcmat, labels=FALSE, rad=0.95, col='blue', lwd=1, add=TRUE )
+        dev.off()
+        }
+
+    pathvec = dir( pathtemp, pattern="png$", full=T )
+    webm_file = sprintf( "%s/animation%g.webm", pathtemp, index )
+    out = av::av_encode_video( pathvec, output=webm_file, framerate=framerate, codec='libvpx-vp9', verbose=F )
+    res = file.remove( pathvec )  # cleanup the .PNG files, leaving just the .webm
+
+    return(out)
+    }
+```
+</div>
+
+<br>
+
+Embedding videos in the HTML output is done with the help of the package **base64enc** and this function:
+
+<button id="B-video2html()" onclick="ToggleDiv('video2html()')">Show video2html()</button>
+<div id="D-video2html()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+
+video2html  <- function( path, attributes="controls loop autoplay muted" )
+    {
+    requireNamespace( "base64enc", quietly=TRUE )
+    
+    i   = regexpr( "[.][a-z]+$", path, ignore.case=T )
+    if( i < 0 ) return('')
+    ext = substring( path, i+1 )    # extract the extension, and skip over the '.'
+    
+    part1   = sprintf( '<video %s src="data:video/%s;base64,\n', attributes, ext )
+    part2   = base64enc::base64encode( path, linewidth=120, newline='\n' )
+    part3   = '"></video>'
+    
+    return( paste0( part1, part2, part3, collapse='' ) )
+    }
+```
+</div>
+
+
+
+
+
+<br><br>
+
+# The Tubular Neighborhood of $A_n \subseteq A_{n+1}$
+
+$A_n$ is a _stratum_ in $A_{n+1}$ and there is a _tubular neighborhood_
+of $A_n$ in $A_{n+1}$.
+Since the codimension is 2, the fiber of a point $a \in A_n$ in the neighborhood
+is an open 2-disk $\text{int}(D^2)$.
+The boundary of the 2-disk is a circle,
+which we think of this circle as a closed path of points at
+a small and equal distance from $a$.
+
+We can compute this circle by mapping $a$ to $\mathbb{S}^{2n+2}$
+using the homeomorphism 
+$A_{n+1} ~ \rightleftarrows ~  \mathbb{S}^{2n+2}$,
+computing the circle in $\mathbb{S}^{2n+2}$,
+and then mapping back to $A_{n+1}$ using the inverse homeomorphism.
+This is the function we will use:
+
+<button id="B-circle_of_arcs()" onclick="ToggleDiv('circle_of_arcs()')">Show circle_of_arcs()</button>
+<div id="D-circle_of_arcs()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+circle_of_arcs <- function( arcmat, rad=0.1, count=180 )
+    {
+    res = spherefromarcs_plus( arcmat, n=nrow(arcmat)+1L )
+    
+    out     = vector( count, mode='list' )
+    namevec = character( count )
+    
+    for( i in 1:count )
+        {
+        theta   = 2*pi * (i-1)/count     # theta is in radians, starting at 0
+        u   = res$u  +  rad * ( cos(theta)*res$normal[ ,1]  +  sin(theta)*res$normal[ ,2] )
+        out[[i]]      = arcsfromsphere( u )     # u is automatically unitized
+        namevec[i]    = sprintf( "i = %d", i )
+        }
+
+    names(out)  = namevec
+
+    return( out )
+    }
+```
+</div>
+The case of $n{=}0$ is easy to visualize.
+The space $A_0$ is 2 points, which map to the "poles" of the sphere $\mathbb{S}^2$.
+The empty arc maps to the "south" and the full circle maps to the "north"
+Around each pole is a small circle.
+For the "south pole" it is a circle of tiny arcs, almost empty.
+For the "north pole" it is a circle of very large arcs, almost the full circle.
+In both cases, the length of the arcs is constant, while the center loops around
+$\mathbb{S}^1$.
+
+
+<br><br>
+
+# A Circle of Arcs in $A_2$ around a Single Arc in $A_1$
+
+The goal of this section is to take a single arc $a \in A_1$
+and plot the 2 arcs in $A_2$ that circle around $a$.
+
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+# arcmat1 is a single semicircle centered at (1,0)
+arcmat1    = matrix( c(0,pi), nrow=1, ncol=2 )
+circle     = circle_of_arcs( arcmat1, count=90 )
+webm_file  = WebMfromarclist( circle, arcmat1, index=1, vpsize=c(480,480) )
+video_html = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of arcs around a single arc
+</div>
+
+The original arc is drawn in blue,
+and shrunken a little so it does not overlap with the nearby pair
+of arcs.
+
+
+<br><br>
+
+# A Circle of Arcs in $A_3$ around Two Arcs in $A_2$
+
+This section is the same as the previous one,
+except we bump up the complexity.
+Now $a \in A_2$ is a pair of arcs,
+and we plot the 3 arcs in $A_3$ that circle around $a$.
+
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+# arcmat2 is: an arc filling quadrant #1, plus an arc filling quadrant #3
+arcmat2    = matrix( c((1/4)*pi,pi/2, (5/4)*pi,pi/2), nrow=2, ncol=2, byrow=TRUE )
+circle     = circle_of_arcs( arcmat2, count=90 )
+webm_file  = WebMfromarclist( circle, arcmat2, index=2, vpsize=c(480,480) )
+video_html = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of 3 arcs around a pair of arcs
+</div>
+The original pair of arcs are drawn in blue,
+and shrunken a little so they does not overlap with the nearby triple of arcs.
+
+
+<br><br>
+
+# Empty Arc to Full Circle, and Back Again
+
+In this one, the path in the sphere starts at the "south pole",
+goes up through an arbitrary point along a great semicircle to the antipodal "north pole",
+and then down the other side.
+The full path is a great circle, and is pieced together using the function `slerp()`
+(spherical linear interpolation) from @Shoemake1985.
+
+<button id="B-poletopole()" onclick="ToggleDiv('poletopole()')">Show poletopole()</button>
+<div id="D-poletopole()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+poletopole <- function( arcmat, thetamax=pi/36, n=NULL )
+    {
+    u  = spherefromarcs( arcmat, n=n )
+
+    #  make south and north poles
+    m       = length(u)    
+    south   = c( rep(0,m-1), -1 ) ;      north   = -south
+    
+    path1   = slerp( south, u, thetamax=thetamax )   #   from "south pole" to u
+    path2   = slerp( u, north, thetamax=thetamax )   #   from u to "north pole"
+
+    path    = rbind( path1, path2 ) # concatenate the 2 paths
+    path    = rbind( path, -path )  # back down the other side to south pole again
+    
+    count   = nrow(path)
+    out     = vector( count, mode='list' )
+    for( i in 1:count )
+        out[[i]] = arcsfromsphere( path[i, ] )
+
+    names(out)  = sprintf( "y_%d = %.3f", m, path[ ,m] )
+
+    return( out )    
+    }
+```
+</div>
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+# arcmat3 is 3 arcs of different lengths
+arcmat3    = matrix( c(0.375,0.75,  2.3,1.1,  4.6,2.8), ncol=2, byrow=TRUE )
+arclist    = poletopole( arcmat3 )
+webm_file  = WebMfromarclist( arclist, arcmat3, index=3, vpsize=c(480,480) )
+video_html = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+empty to full circle, and back to empty on the other side
+</div>
+
+The defining arcs are drawn in blue,
+and shrunken a little so they do not overlap with the arcs along the path.
+Note that at each step, there are 3 arcs, except at
+the poles, i.e. the empty arc and the full circle.
+
+But it is easy to make an example where the number of arcs
+is **not** a constant.
+```{r, echo=TRUE, message=TRUE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+# arcmat1 is a single arc, but it splits into 3 arcs on either side of the path from pole to pole
+arcmat1    = matrix( c(1.5,2.9), ncol=2, byrow=TRUE )
+arclist    = poletopole( arcmat1, n=3 )
+webm_file  = WebMfromarclist( arclist, arcmat1, index=4, vpsize=c(480,480) )
+video_html = video2html(webm_file)
+```
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+empty to full circle, and back to empty on the other side
+</div>
+The defining arc is drawn in blue,
+and shrunken a little so it does not overlap with the arcs along the path.
+
+
+
+<br><br>
+
+# References
+
+<div id="refs"></div>
+
+
+
+
+<br><br>
+
+# Session Information
+
+This document was prepared
+`r format(Sys.Date(), "%a %b %d, %Y")`
+with the following configuration:
+<pre>
+```{r, echo=FALSE, results='asis'}
+options(old_opt)
+sessionInfo()
+```
+</pre>

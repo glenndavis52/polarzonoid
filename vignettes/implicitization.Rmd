@@ -1,0 +1,277 @@
+---
+title: "Implicitization"
+author: "Glenn Davis"
+date: "`r Sys.Date()`"
+
+
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+
+header-includes:
+  - \newcommand{\abs}[1]{\lvert #1 \rvert}
+    
+    
+bibliography: bibliography.bib
+
+# csl: iso690-numeric-brackets-cs.csl
+csl: personal.csl
+# csl: institute-of-mathematical-statistics.csl
+# csl: transactions-on-mathematical-software.csl
+vignette: >
+  %\VignetteIndexEntry{Implicitization}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+
+```{css, echo=FALSE}
+body {
+  max-width: 725px;     /* make wider, default is 700px */
+}
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+old_opt = options( width=144 )
+```
+
+<br><br>
+
+# Introduction
+
+```{r, echo=FALSE, message=FALSE}
+library(polarzonoid)
+```
+
+In the [User Guide](../vignettes/polarzonoid-guide.html) vignette
+it is shown that there is are homeomorphisms
+\begin{equation}
+A_n  ~~ \longleftrightarrow  ~~ \partial Z_n ~~ \longleftrightarrow ~~ \mathbb{S}^{2n}
+\end{equation}
+where $A_n$ is the space of $n$ or fewer pairwise disjoint arcs in the circle,
+and $Z_n$ is the polar zonoid in $\mathbb{R}^{2n+1}$.
+The forward direction $\partial Z_n ~~ \to ~~ \mathbb{S}^{2n}$ is the trivial projection
+onto the unit sphere centered at $(0,...0,\pi)$.
+But the reverse direction requires intersecting a ray with $\partial Z_n$, which is non-trivial.
+The function in the package that performs this intersection is `boundaryfromsphere()`.
+It expresses $\partial Z_n$ as the level set of a real-valued function,
+and uses `uniroot()` to solve for the intersection point.
+
+In this vignette, we outline how $\partial Z_n$ is defined parametrically
+and how the real-valued function is derived.  This process is called _implicitization_, see @cox2008.
+In the current version of the package, the implicitization has only been computed for $n$=1,2, and 3.
+
+Throughout this vignette we think of $\partial Z_n \subseteq \mathbb{R}^{2n+1}$
+and identify the latter with points $(z_1,...,z_n,L)$ where $z_i$ are complex
+numbers and $L$ is real.
+
+Assume first that $n{=}1$ so there is a single arc in the circle, i.e. a point in $A_1$.
+We parameterize the arc by its first and last endpoints $u_1$ and $v_1$,
+both on the unit circle in the complex plane, and proceeding counterclockwise from $u_1$ to $v_1$.
+Let the length of the arc be $l_1$, so that $v_1 = u_1 e^{i l_1}$.
+It is not hard to show that the map $A_1 \to \partial Z_1$ is given by
+\begin{equation}
+(u_1,v_1) \mapsto ( ~(v_1{-}u_1)/i, ~ l_1 ~) ~=~ (z_1,L)
+\end{equation}
+where $z_1 := (v_1{-}u_1)/i$.
+Similarly, when  $n{=}2$, it is easy to show that the map $A_2 \to \partial Z_2$ is given by:
+\begin{equation}
+(u_1,v_1,u_2,v_2) \mapsto ( ~ \left( v_1{-}u_1 + v_2{-}u_2 \right)/i,  ~ \left( v_1^2{-}u_1^2 + v_2^2{-}u_2^2 \right)/(2i), ~ l_1{+}l_2 ~)  ~=~ (z_1,z_2,L)
+\end{equation}
+and so on for $n \ge 3$.
+Since $u_i$ and $v_i$ are unit vectors, $u_i \overline{u_i} = 1$ and $v_i \overline{v_i} = 1$
+where the overline denotes complex conjugate.
+It follows easily that:
+\begin{align}
+\overline{z_1} &= \big( u_2 v_2 (v_1 - u_1) + u_1 v_1(v_2 - u_2) \big) \left( -i / (u_1 u_2 v_1 v_2) \right) \\
+\overline{z_2} &= \big( u_2^2 v_2^2 (v_1^2 - u_1^2) + u_1^2 v_1^2(v_2^2 - u_2^2) \big) \left( -i / (2 u_1^2 u_2^2 v_1^2 v_2^2) \right)
+\end{align}
+
+And using Euler's formula, one can show:
+\begin{align}
+\sin(L/2)  &=  \frac{v_1 v_2 - u_1 u_2}{2i} ~~ \frac{e ^{-iL/2}}{u_1 u_2}  \\
+\cos(L/2)  &=  \frac{v_1 v_2 + u_1 u_2}{2}  ~~ \frac{e ^{-iL/2}}{u_1 u_2}
+\end{align}
+
+The expressions for $n{=}1$ and $n{=}3$ are similar.
+These right-hand-sides are "rational enough" that algebraic geometry can be used for implicitization.
+We use the Rational Implicitization algorithm in Chapter 3, Section 3 of @cox2008.
+The fact that second term in each RHS is a unit complex number plays a simplifying role.
+The results are in the next section.
+
+
+<br><br>
+
+# The Equations for $n$ = 1,2, and 3 arcs
+
+Throughout this section we assume that $L \in [0,2\pi]$.
+With lots of help from Macaulay2 @M2, followed by manual rearrangement,
+one can show that for $n$ = 1,2, and 3 that
+\begin{equation}
+(z_1,...,z_n,L) \in \partial Z_n ~~~ \text{ iff } ~~~ | \gamma_n(z_1,...,z_n,L) | = \rho_n(z_1,...,z_n,L)  
+\end{equation}
+and
+\begin{equation}
+(z_1,...,z_n,L) \in  Z_n ~~~ \text{ iff } ~~~ | \gamma_n(z_1,...,z_n,L) |  \le  \rho_n(z_1,...,z_n,L)  
+\end{equation}
+where $\gamma_n()$ is a complex-valued function, and $\rho_n()$ is a real-valued function.
+The details of this are complicated, especially for $n{=}3$, and are omitted.
+For $n{=}4$, Macaulay2 runs out of memory and
+cannot finish; but I conjecture that these two functions exist for all $n$.
+For small $n$, they are given in this table:
+<br>
+
+```{r, echo=FALSE, message=TRUE}
+library( flextable )
+requireNamespace('equatags',quietly=TRUE)
+
+rhs <- c(
+  "\\gamma_n(z_1,...,z_n,L)",
+  "z_1",
+  "\\cos(L/2)z_1^2 ~-~ 2 \\sin(L/2)z_2",
+  "12 ( 4\\sin^2(L/2) ~-~ |z_1|^2 ) z_3 \\newline { ~+~ (8\\cos^2(L/2) - |z_1|^2 + 4) z_1^3 } \\newline ~-~ 48 \\sin(L/2)\\cos(L/2) z_1 z_2 ~+~ 12 \\overline{z_1} z_2^2"
+  )
+
+lhs = c(
+    "\\rho_n(z_1,...,z_n,L)",
+    "2\\sin(L/2)", 
+    "4\\sin^2(L/2) ~-~ |z_1|^2", 
+    "{ 6\\sin(L/2) (|z_1|^4 - 8|z_1|^2 - 4|z_2|^2 ) }  \\newline { ~+~ 12\\cos(L/2)(\\overline{z_1}^2z_2 + z_1^2\\overline{z_2}) }   \\newline ~+~ 96\\sin^3(L/2)" )
+
+df <- data.frame( n=c('n',1:3), gamma=rhs, rho=lhs ) # ; df
+
+ft <- flextable(df)
+ft <- compose( x=ft, j="n", value = as_paragraph(as_equation(n, width=0.5)))
+ft <- compose( x=ft, j="gamma", value = as_paragraph(as_equation(gamma, width=4.2)))
+ft <- compose( x=ft, j="rho", value = as_paragraph(as_equation(rho, width=4.2)))
+ft <- align( ft, align = "center", part = "all")
+ft <- width( ft, j=c(2,3), width=4.2 )
+ft <- delete_part( ft, part="header" )
+
+#  add borders
+thick_border = fp_border_default(color="black", width = 2)
+thin_border = fp_border_default(color="gray", width = 1)
+ft <- border_inner_h( ft, part="all", border = thin_border )
+ft <- border_inner_v( ft, part="all", border = thin_border )
+ft <- border_outer( ft, part="all", border = thick_border )
+ft <- hline( ft, i=1, border=thick_border )
+ft <- vline( ft, i=1, j=c(1,2), border=thick_border )
+
+ft
+```
+
+The functions $\rho_1()$ and $\rho_2()$ are obviously real,
+and $\rho_3()$ is real because $\overline{z_1}^2z_2 + z_1^2\overline{z_2}$ is real.
+
+The case $n{=}1$ is in $\mathbb{R}^3$ and easy to visualize:
+\begin{equation}
+(z_1,L) \in  \partial Z_1 ~~~ \text{ iff } ~~~ |z_1| = 2\sin(L/2)
+\end{equation}
+This is a surface of revolution - a sine wave around the L axis.
+It is like a football with poles at (0,0) and (0,$2\pi$).
+Note that these 2 poles are exactly the points where the right side of the equality vanishes.
+
+If we define $f(z_1,...,z_n,L) := | \gamma_n(z_1,...,z_n,L) | - \rho_n(z_1,...,z_n,L)$
+then $f()$ vanishes on $\partial Z_n$, is negative in the interior of $Z_n$,
+and is positive outside $Z_n$.
+This _level-set function_ $f()$ is used in `boundaryfromsphere()` to compute the intersection of a ray
+based at $(0,\pi)$ and $\partial Z_n$.
+The gradient of $f()$ is used in `arcsfromboundary()`; see the next section.
+
+
+<br><br>
+
+# Supporting Hyperplanes of $\partial Z_n$
+
+For $x = (z_1,...,z_n,L) \in \partial Z_n$ evaluating the function $\partial Z_n \to A_n$ requires
+the outward normal of a supporting hyperplane to $\partial Z_n$ at $x$.
+The coordinates of this normal become the coefficients of a trigonometric polynomial,
+whose roots are the endpoints of arcs.
+If $\partial Z_n$ is smooth at $x$ the supporting hyperplane is unique,
+and is in fact the gradient of the level-set function $f()$ at $x$.
+Also in this case the trigonometric polynomial has the full set of $2n$ roots, defining $n$ arcs.
+
+But unfortunately, $\partial Z_n$ is _NOT_ smooth at all $x$.
+We saw this already with $n{=}1$, where the surface is not smooth at the 2 poles.
+At the poles, there are infinitely many supporting planes,
+the trigonometric polynomial has 0 roots,
+the "south pole" maps to the empty arc, and the "north pole" to the full circle.
+
+The function $\partial Z_n \to A_n$ is implemented in `arcsfromboundary()`.
+This **R** function has to deal with the non-smooth case.
+It turns out that $\partial Z_n$ is smooth at $x$ iff $\rho_n(x) > 0$.
+We saw this already with $n{=}1$.
+So starting at $k{=}1$ and incrementing up to $n$, it tests $\rho_k(z_1,...,z_k,L)$.
+If  $\rho_k(z_1,...,z_k,L) < \epsilon$, it returns a collection of $k{-}1$ arcs in $A_n$.
+Otherwise the surface is smooth at $x$ and it returns $n$ arcs. 
+Recall that $A_n$ is the space of $n$ _or fewer_ arcs.
+`arcsfromboundary()` first calculates the outward pointing normal at p.
+The the gradient of the level-set function $f()$ is used to compute this normal;
+the expressions for the gradient are more complicated than the ones in the above table,
+and are omitted here.
+This coordinates of this normal are the coefficients of
+a trigonometric polynomial whose roots are calculated with `trigpolyroot()`.
+These roots are the endpoints of the arcs.
+
+**NOTE:**
+The differences $X_i := \partial Z_i - \partial Z_{i-1}$ almost surely form
+a _Thom-Mather stratification_ of $\partial Z_n \subset \mathbb{R}^{2n+1}$,
+but I have not checked this.
+The conditions for such a stratification are complex, and are in @ThomMather.
+Each $X_i$ is the image of _exactly_ $i$ arcs.
+I think that the above functions $\rho_i()$, after restriction to $X_i$,
+can serve as the _distance functions_ in the stratification.
+
+<br><br>
+
+# Summary
+
+The forward functions:
+\begin{equation}
+A_n  ~~ \longrightarrow  ~~ \partial Z_n ~~ \longrightarrow ~~ \mathbb{S}^{2n}
+\end{equation}
+are straightforward.
+In the package, they are implemented as `boundaryfromarcs()` and `spherefromboundary()` respectively.
+
+But the inverse functions:
+\begin{equation}
+A_n  ~~ \longleftarrow  ~~ \partial Z_n ~~ \longleftarrow ~~ \mathbb{S}^{2n}
+\end{equation}
+use convergent numerical iteration.
+The first one, `boundaryfromsphere()`, uses the implicit function defined above,
+and this version of the package requires that $n$ = 1, 2, or 3.
+The second one, `arcsfromsphere()`, solves for the roots of a trigonometric polynomial
+and uses `base::polyroot()`.
+
+
+
+
+
+<br><br>
+
+# References
+
+<div id="refs"></div>
+
+
+
+
+<br><br>
+
+
+
+
+# Session Information
+
+This document was prepared
+`r format(Sys.Date(), "%a %b %d, %Y")`
+with the following configuration:
+<pre>
+```{r, echo=FALSE, results='asis'}
+options(old_opt)
+sessionInfo()
+```
+</pre>

@@ -1,0 +1,565 @@
+---
+title: "Polarzonoid User Guide"
+author: "Glenn Davis"
+date: "`r Sys.Date()`"
+
+
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+
+header-includes:
+  - \newcommand{\abs}[1]{\lvert #1 \rvert}
+  - \newcommand{\Vw}{\large\mathscr{V} \normalsize_w}  
+    
+bibliography: bibliography.bib
+
+# csl: iso690-numeric-brackets-cs.csl
+csl: personal.csl
+# csl: institute-of-mathematical-statistics.csl
+# csl: transactions-on-mathematical-software.csl
+vignette: >
+  %\VignetteIndexEntry{Polarzonoid User Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "all"} } });
+</script>
+
+
+```{css, echo=FALSE}
+body {
+  max-width: 725px;     /* make wider, default is 700px */
+}
+  h1{
+  font-size: 20pt;    /* make the level 1 headers smaller */
+}
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+old_opt = options( width=144 )
+
+require("rgl",quietly=TRUE)
+rgl::setupKnitr(autoprint = TRUE)
+```
+
+<br><br>
+
+
+
+# Introduction
+
+```{r, echo=FALSE, message=FALSE}
+library(polarzonoid)
+library(zonohedra,quietly=TRUE)
+```
+
+The mail goal of this vignette is to show that there are homeomorphisms
+\begin{equation*}
+A_n  ~~ \longleftrightarrow  ~~ \partial Z_n ~~ \longleftrightarrow  ~~ \mathbb{S}^{2n}
+\end{equation*}
+Where $A_n$ is a space of arcs and $\partial Z_n$ is the boundary of a _polar zonoid_.
+Both of these spaces are defined below.
+
+In this User Guide we start with very general zonoids,
+and after two sections specialize to the polar zonoid.
+
+
+
+<br><br>
+
+#  Zonoids with Generating Functions
+
+For this package we only consider zonoids defined by generating functions in $L^1( \mathbb{S}^1 )$,
+where the unit circle $\mathbb{S}^1$ has the usual Lesbesgue measure.
+I do not know whether more exotic zonoids exist.
+For a very good survey of the theory of zonoids, see @Bolker1969.
+
+Let $w_1, w_2, ..., w_m$ be absolutely integrable functions from $\mathbb{S}^1$ to $\mathbb{R}$,
+i.e. each $w_i \in L^1( \mathbb{S}^1 )$.
+For $\theta \in \mathbb{S}^1$, let $w(\theta) := (w_1(\theta), ... , w_m(\theta)) \in \mathbb{R}^n$.
+The letter $w$ denotes "weight".
+
+Define the zonoid $Z_w$ by
+\begin{equation}\label{eqn:defZ1}
+Z_w := \left\{ \int_V  w(\theta) \, d\theta ~|~ V \subseteq \mathbb{S}^1  \right\}
+~~~=~~~
+\left\{ \int_{\mathbb{S}^1} \mathbf{1}_{V}(\theta) w(\theta) \, d\theta ~|~ V \subseteq \mathbb{S}^1  \right\}
+\end{equation}
+
+
+where $V$ varies over all measurable subsets of $\mathbb{S}^1$.
+The function $\mathbf{1}_{V}$ is the indicator function of $V$.
+The functions $w_1(\theta), ... , w_m(\theta)$ are the _generating functions_ of $Z_w$,
+and $w(\theta)$ is the _generating function_.
+
+The function $w(\theta)$ induces a vector measure on the circle:
+$\mu_w(V) :=  \int_V w(\theta) \, d\theta$.
+This measure is _atom free_.
+The measure viewpoint gives a simpler alternative definition:
+\begin{equation}\label{eqn:defZ2}
+Z_w  := \left\{ \mu_w(V) ~|~ V \subseteq \mathbb{S}^1  \right\}
+\end{equation}
+
+This is the classical definition of a general zonoid, except with $\mu_w$ replaced by
+an arbitrary atom free vector measure $\mu$.
+Given a zonoid $Z_\mu$ which is the range of $\mu$, the measure $\mu$ is not unique.
+It was shown in @Rickert1967 that two zonoids are equal if and only if
+the total measures of the corresponding spaces are equal,
+and certain induced measures on the projective space $\mathbb{R}\text{P}^{n-1}$ are equal.
+This was reproved in @Bolker1969.
+By a classical theorem of Lyapunov, a zonoid is convex and closed, see Theorem 5.5 of @RudinFA.
+
+The generating function $w$ is far from unique;
+for most $w$, with very few exceptions, it is easy to find many $w' \neq w$
+for which $Z_{w'} = Z_w$.
+
+Now let $Q^\infty$ be the set of measurable functions on $\mathbb{S}^1$ whose essential range
+is in $[0,1]$.
+In fancier terms, $Q^\infty$ is the non-negative part of the unit ball in  $L^\infty( \mathbb{S}^1 )$.
+The indicator functions $\mathbf{1}_{V}$ are in $Q^\infty$;
+in fact $Q^\infty$ is like a cube and the indicator functions $\mathbf{1}_{V}$
+are the vertices of that cube.
+It is an amazing fact that, in equation (\ref{eqn:defZ1}),
+if the vertices $\mathbf{1}_{V}$ are replaced by arbitrary $f \in Q^\infty$
+the resulting set does not get any larger !
+Therefore we also have:
+\begin{equation}
+Z_w  = \left\{ \int_{\mathbb{S}^1} f(\theta) w(\theta) \, d\theta ~|~ f \in Q^\infty  \right\}
+\end{equation}
+
+This is another classic theorem of Lyapunov;
+for the proof, see Theorem 5.5 in @RudinFA.
+In control theory this amazing fact is related to the "bang-bang principle".
+
+
+**SIDE NOTE:**
+The previous concepts actually have a physical application in colorimetry.
+The variable $\theta$ is wavelength.
+The function $f$ is reflectance, which must be between 0 and 1.
+The functions $w_1(\theta), w_2(\theta), w_3(\theta)$ are responsivities for
+short, medium, and long wavelength bands.
+$Z_w$ is the _object color solid_.
+In reference @Koenderink, which is a scientific book on colorimetry,
+the theorem of Lyapunov and the "bang-bang principle"
+are mentioned in Chapter 7 Notes 4 and 5, page 321.
+The first bang is 0, and the second bang is 1.
+
+
+<br><br>
+
+#  The Boundary of Zonoids with Generating Functions
+
+We want to derive an expression similar to (\ref{eqn:defZ2}),
+but for $\partial Z_w$ instead of $Z_w$.
+
+Let $c = (c_1,...,c_m)$ be a fixed non-zero vector and consider maximizing the inner product
+of $\langle c , z \rangle$ over all $z \in Z_w$.
+By (\ref{eqn:defZ2}) any such $z$ is $\mu_w(V)$ for some $V \subset \mathbb{S}^1$ and we have:
+\begin{equation}
+\left\langle  c, \mu_w(V) \right\rangle
+~=~ \left\langle  c, \int_V  w(\theta) \, d\theta \right\rangle
+~=~  \int_V \left\langle  c,  w(\theta) \right\rangle  \, d\theta
+~=~  \int_V c_1 w_1(\theta) + ... +  c_m w_m(\theta)  \, d\theta
+\end{equation}
+This expression is clearly maximized when $V$ is the set of $\theta$
+where the combination $c_1 w_1(\theta) + ... +  c_m w_m(\theta)$ is non-negative.
+Denote this set by:
+\begin{equation}\label{eqn:Vc}
+V_c  :=  \left\{  \theta ~|~ c_1 w_1(\theta) + ... +  c_m w_m(\theta) \ge 0  \right\}
+\end{equation}
+Since the maximum of the inner product must be taken on $\partial Z_w$,
+choosing this $V_c$ means that $\mu_w(V_c) \in \partial Z_w$.
+Note that $V_c$ might be empty, and it might be the entire circle.
+
+To proceed further, we require from now on  that $w$ has this simplifying property:
+
+**Property S**.
+Every non-trivial linear combination $c_1 w_1(\theta) + ... +  c_m w_m(\theta)$
+is non-zero for almost all $\theta$.
+
+Think of this property as a very strong form of linear independence.
+Not only is the linear combination non-zero on a set of positive measure,
+it is non-zero at almost every point.
+
+As a consequence of Property S, the inner product with $c$
+is _uniquely_ maximized by $\mu_w(V_c)$.
+In other words, if $V \neq V_c$ then
+$\langle c , \mu_w(V) \rangle < \langle c , \mu_w(V_c) \rangle$.
+In the terminology of convex bodies, every _face_ of $Z_w$ is single point.
+
+Now define
+\begin{equation}
+\Vw ~:=~ \left\{ V_c ~|~ c \ne 0 \} ~=~ \{ V_c ~|~ c \in \mathbb{S}^{2n} \right\}
+\end{equation}
+$\Vw$ is a family of subsets of $\mathbb{S}^1$ that depends only on $w$.
+The last equality is true because multiplying $c$ by a positive scalar does not change $V_c$.
+We make $\Vw$ into a topological space by identify $V_c$ with its
+indicator function $\mathbf{1}_{V_c} \subset L^1( \mathbb{S}^1 )$.
+So we can think of $\Vw$ as a subset of $L^1( \mathbb{S}^1 )$ and let $\Vw$ inherit the topology
+from the bigger space.
+
+
+**Theorem A:**
+If $w$ has Property S, then the map
+\begin{equation}\label 
+\Vw \to \partial Z_w
+\end{equation}
+given by  $V_c \mapsto \mu_w(V_c)$, is a homeomorphism.
+
+
+**Proof:**
+The map $V_c \mapsto \mu_w(V_c) = \int_{V_c} w \, d\theta$ is clearly continuous.
+Recall that by Property S, if $V \neq V_c$,
+then $\langle c , \mu_w(V) \rangle < \langle c , \mu_w(V_c) \rangle$.
+
+First the surjective part.
+Let $b \in \partial Z_w$.
+Since $b \in Z_w$, $b = \mu_w(V)$ for some $V \subset \mathbb{S}^1$.
+Since $Z_w$ is convex, there is a supporting hyperplane of $Z_w$ at $b$
+with non-zero outward-pointing normal $c$.
+if $V \neq V_c$, then
+$\langle c , b \rangle   ~=~  \langle c , \mu_w(V) \rangle < \langle c , \mu_w(V_c) \rangle$.
+But point $b$ maximizes the inner product with $c$.
+This is a contradiction and so $V = V_c$ and $b = \mu_w(V_c)$.
+
+Now the injective part.
+Let $V_c,V_{c'} \in \Vw$.
+If $V_{c'} \neq V_c$, then
+$\langle c , \mu(V_{c'}) \rangle  <  \langle c , \mu(V_c) \rangle$
+and so $\mu(V_{c'}) \neq  \mu(V_c)$.
+$\square$
+
+Without Property S, the conclusion of the theorem is definitely false.
+For example, if the range of $w$ is finite, i.e. if $w$ is a _simple function_,
+then $\Vw$ is finite too.
+But $\partial Z_w$ is obviously not.
+In this case the zonoid is a _zonotope_ - a zonoid which is also a polytope.
+Many equivalent conditions for zonotopes are discussed by Bolker in
+Theorem 3.3 of @Bolker1969.
+The image of the map in the theorem is simply the vertices of $\partial Z_w$.
+We hope to discuss _polar zonotopes_ in a future version of this package.
+
+We summarize with an expression for $\partial Z_w$.
+If $w$ has Property S, then
+\begin{equation}\label{eqn:bZw}
+\partial Z_w  = \left\{ \int_{V_c} w(\theta)  \, d \theta  ~|~ c \neq 0  \right\} ~=~ \left\{ \mu_w(V_c) ~|~ V_c \in \Vw \right\}
+\end{equation}
+Compare this expression with (\ref{eqn:defZ2}).
+In that expression for $Z_w$, $V$ ranges over _all_ $V \subset \mathbb{S}^1$,
+but for $\partial Z_w$ only the sets $V_c$ are used.
+
+Given a particular generating function $w$,
+the first step in describing $\partial Z_w$ is to describe the family $\Vw$
+of subsets of $\mathbb{S}^1$.
+In the next section we do this for a particularly simple and special $w$.
+
+
+<br><br>
+
+#  Trigonometric Polynomials and The Polar Zonoid
+
+We are finally ready to define the polar zonoid.
+Fix $n \ge 1$ and let $w(\theta)$ be given by the $m = 2n+1$ functions:
+\begin{equation}\label{eqn:w}
+w(\theta) := ( \cos \theta, \sin \theta, \cos 2\theta, \sin 2\theta, ..., \cos n\theta, \sin n\theta, 1)
+\end{equation}
+These $m$ functions are a basis for the _trigonometric polynomials_ of order $n$.
+From now on in this vignette, $w$ means this particular function.
+
+We call the generated zonoid the _polar zonoid_ of order $n$ in $\mathbb{R}^{2n+1}$
+and denote it by $Z_n$.
+To describe $\partial Z_n$, by (\ref{eqn:Vc}) and (\ref{eqn:bZw}) we must describe the sets
+\begin{equation}
+V_{a,b} := 
+\{ \theta ~|~ a_1\cos \theta + b_1 \sin \theta  ~+  ... ~+ a_n \cos n\theta + b_n \sin n\theta + a_0 \ge 0 \}
+\end{equation}
+where not all $a_i$ and $b_i$ are 0.
+Note we have switched from $c_i$ to $a_i$ and $b_i$ because this is the classical
+notation for trigonometric polynomials.
+We also put the constant term last instead of first,
+because we think of the last coordinate as "vertical" and the others as "horizontal".
+
+For later use, we state without proof that the product of two trigonometric polynomials
+of order $n_1$ and $n_2$ is a trigonometric polynomial of order $n_1 + n_2$.
+
+**NOTE:**
+The term _polar zonoid_ was chosen because it is a generalization
+of the _polar zonohedron_, see @Chilton1963.
+_Warning:_ In other contexts, i.e. the theory of convex bodies,
+the term "polar zonoid" is short for "polar of a zonoid",
+which is an entirely different concept.
+
+It is well-known that the trignometric polynomials have most $2n$ roots,
+see Chapter X, Theorem 1.7 in @Zygmund2.
+Thus Property S is trivially true, and the previous Theorem applies.
+Since the trigonometric polynomials are continuous,
+we can conclude that each set $V_{a,b}$ is the union of $n$ or fewer arcs
+(possibly no arcs at all) in the circle, _or_ the entire circle.
+
+Conversely, given any $n$ disjoint closed arcs,
+there is a trigonometric polynomial of order $n$
+whose roots are the $2n$ endpoints of those arcs,
+and is non-negative on those arcs.
+
+We conclude that for the above $w$ of trigonometric functions:
+\begin{equation}
+\Vw = \text{ the space of } n \text{ or fewer pairwise disjoint closed arcs in the circle } \mathbb{S}^1
+\end{equation}
+
+We investigate families of arcs in the next section.
+
+
+
+<br><br>
+
+# Spaces of Arcs $A_n$
+
+*Definition:* $A_n$ is the space of $n$ _or fewer_ pairwise disjoint closed arcs in the circle $\mathbb{S}^1$.
+
+$A_n$ is the same as $\Vw$ in the previous section,
+and from now on we use this new notation.
+
+For example, here are 2 plots of arcs on the circle, the left with 1 arc and the right with 3 arcs.
+
+```{r, echo=TRUE,  message=TRUE,  warning=TRUE, fig.width=8, fig.height=4, fig.cap='Figure 3.0 examples of collections of pairwise disjoint arcs', out.width="95%", cache=FALSE }
+
+oldpar = par( mfrow=c(1,2)  , omi=c(0.1,0.1,0.1,0.1), mai=c(0.45,0.5,0.1,0) )
+arcmat = matrix( c(1.5,2.9), nrow=1, ncol=2, byrow=TRUE )
+plotarcs( arcmat, main=NA )
+
+arcmat = matrix( c(1.5,2, pi,0.5, 5,pi/4 ), nrow=3, ncol=2, byrow=TRUE )
+plotarcs( arcmat, main=NA ) ;  par( oldpar )
+```
+
+
+Both of these represent *points* in $A_3$.
+The left plot also represents a *point* in $A_1$.
+We define $A_0$ to be the set of 2 _improper_ arcs: the empty arc, and the full circle.
+
+We have proper inclusions:
+\begin{equation}
+A_0 \subset A_1  \subset A_2 \subset A_3  \subset A_4  ~~~ ...
+\end{equation}
+
+We make $A_n$ into a topological space by identify a set of disjoint arcs $V$ with its
+indicator function $\mathbf{1}_{V} \subset L^1( \mathbb{S}^1 )$.
+We think of $A_n$ as a subset of this $L^1$
+and let $A_n$ inherit the topology from the bigger space.
+
+In more detail, $A_n$ is a metric space with metric defined as follows.
+Let $V$ and $W$ be sets of arcs in $A_n$, so $V , W \subset \mathbb{S}^1$.
+Define the metric
+$d(V,W) := \int_{\mathbb{S}^1} \lvert \mathbf{1}_{V} - \mathbf{1}_{W} \rvert d\theta$.
+
+The metric can be viewed in another way; the symmetric difference of $V$ and $W$ is
+also a collection of arcs, and $d(V,W)$ is the total length of the arcs in this
+symmetric difference.
+The corresponding functions in the package are `arcsdistance()` and `arcssymmdiff()`.
+With this choice of metric, an arc of length 0 is considered to be the same as the empty arc,
+but it _is_ allowed in the software.
+
+There is a useful relationship between the uniqueness of supporting hyperplanes and
+the number of arcs.
+
+**Theorem:**
+For $V \in A_n$, $V$ has exactly $n$ arcs if and only if the supporting
+hyperplane of $Z_n$ at $\mu_w(V)$ is unique.
+
+**Proof:**
+Suppose $V \in A_n$ has exactly $n$ arcs, i.e. that $V \in A_n - A_{n-1}$.
+Let $T(\theta)$ be the trigonometric polynomial of order $n$ with roots at the $2n$ endpoints,
+and orientation that matches $V$.
+Then all the roots of $T(\theta)$ of simple which means that $T(\theta)$ is unique
+up to a positive multiple.
+The coefficients of $T(\theta)$ are the normal to supporting hyperplane and this
+implies that the hyperplane is unique.
+
+Suppose that $V \in A_n$ has exactly $n'$ arcs with $n' < n$.
+The corresponding polynomial $T(\theta)$ has order $n'$ with $2n'$ roots.
+Take a trignometric polynomial $T_\delta(\theta)$ of order $n - n'$ that is everywhere positive
+and not constant. 
+This is easy - just take all $a_i$ and $b_i$ small and non-zero for $i> 0$,
+and $a_0$ sufficiently large.
+Then the product of $T(\theta)$ and $T_\delta(\theta)$ is order $n$
+and has exactly the same arcs.
+The coefficients of the product are a normal vector in a different direction
+and thus there is another supporting hyperplane.
+$\square$.
+
+The theorem says that if a point in $\partial Z_n$ is the image of a point
+in $A_n - A_{n-1}$, then $\partial Z_n$ is smooth at that point.
+But if it is the image of a point in $A_{n-1}$, then  $\partial Z_n$ has a "crease" there.
+
+For example, when $n=1$, $\partial Z_1$ is homeomorphic to $\mathbb{S}^2$
+and it has cusps at 2 "poles" corresponding to the 2 points in $A_0$.
+An approximation of it is illustrated in this figure:
+```{r,  echo=TRUE,  message=TRUE,  warning=TRUE, fig.align='center', fig.width=7.5, fig.height=5, fig.cap='polar zonohedron with 25 generators &emsp;&emsp; [this is an interactive WebGL widget, try it !]',   fig.keep='none', fig.show='hide', out.width="100%", cache=FALSE }
+plot( zonohedra::polarzonohedron( 25, height=2*pi ), type='f', falpha=1  )
+rgl::arc3d( 1.005*c(2,0,pi), 1.005*c(0,2,pi), center=c(0,0,pi), base=c(0,1), color='red', lwd=3 )
+rgl::rglwidget( webgl=TRUE )
+```
+From Theorem A there is a homeomorphism $A_n  \to  \partial Z_n$.
+For $n{=}1$, the description of it is fairly easy.
+For $n{=}1$ there is a single arc in the circle.
+The center of the arc maps to the "longitude" of the boundary $\partial Z_1$,
+and the length of the arc maps to the "latitude".
+Length=0 (the empty arc) goes to the black cusp $(0,0,0)$ at the "south pole"
+and Length=$2\pi$ (the full circle) goes to the white cusp $(0,0,2\pi)$ at the "north pole".
+Semicircles, where Length=$\pi$, go to the red "equator".
+This is a plot of a polar zonohedron, with $M=25$ generators,
+that approximates the true polar zonoid.
+As $M \to \infty$, the polar zonohedron converges to the polar zonoid,
+in the Hausdorff metric.
+This is shown at the end of @Chilton1963.
+The surface is the surface of revolution of the curve $2\sin(z/2)$.
+
+**SIDE NOTE:**
+These investigations were largely inspired by a
+colorimetry paper by P. Centore @Centore2018,
+which started me thinking about the space $A_2$.
+
+
+
+<br><br>
+
+# The Homeomorphism $A_n \to \partial Z_n$
+
+From **Theorem A** we have a homemomorphism:
+\begin{equation}
+A_n  \to  \partial Z_n
+\end{equation}
+given by $V \mapsto \int_V w(\theta) \, d\theta$ and $w(\theta)$ is given by (\ref{eqn:w}).
+The goal of this section is to compute simple expressions for this mapping.
+
+Let all arcs be oriented in the counter-clockwise direction.
+Take a single arc starting at $\theta_0$ and with length $L$,
+and denote it by $[\theta_0,\theta_0+L]$.
+For simplicity, compute the map for only 3 coordinate functions of $w(\theta)$:
+$\left( \cos k\theta, \sin k\theta, 1 \right)$.
+\begin{align*}
+[\theta_0,\theta_0{+}L] &\mapsto \left( \int_{\theta_0}^{\theta_0+L} \cos k\theta \, d\theta , \int_{\theta_0}^{\theta_0{+}L} \sin k\theta \, d\theta  , \int_{\theta_0}^{\theta_0+L} 1 \, d\theta  \right) \\
+&\mapsto  \left( (\sin( k(\theta_0{+}L) ) - \sin(k\theta_0) )/k ) ,  (-\cos( k(\theta_0{+}L) ) + \cos(k\theta_0) )/k )  , L \right)
+\end{align*}
+Expressions like these are used in the function `boundaryfromarcs()`.
+
+It is far simpler to change the first 2 coordinates to complex numbers:
+\begin{align*}
+[\theta_0,\theta_0{+}L] &\mapsto \left( \int_{\theta_0}^{\theta_0+L} e^{ik\theta} \, d\theta ,  \int_{\theta_0}^{\theta_0+L} 1 \, d\theta  \right)  \\
+&\mapsto  \left( (e^{ik(\theta_0{+}L)} - e^{ik\theta_0} ) / (ik)  , L \right)
+\end{align*}
+We leave it to the reader to check that the real and complex expressions are equivalent.
+
+Now take the complex number representation a little further.
+Let the same arc start at $u$ and go counterclockwise to $v$ with length $L$,
+where $u$ and $v$ are complex points on the unit circle.
+So that $u = e^{i\theta_0}$ and $v = e^{i(\theta_0{+}L)} = e^{i\theta_0} e^{iL}$.
+Now denote the same arc by $[u,v]$.
+Making these substitutions gives:
+\begin{equation}
+[u,v] \mapsto \left( \frac{v^k - u^k}{ik} , L \right)
+\end{equation}
+If we have a disjoint union of 2 arcs $V = [u_1,v_1] \sqcup [u_2,v_2]$
+with lengths $l_1$ and $l_2$, then we take the sum.
+\begin{equation}
+[u_1,v_1] \sqcup [u_2,v_2] \mapsto \left( \frac{(v_1^k - u_1^k) + (v_2^k - u_2^k)}{ik} , l_1 + l_2 \right)
+\end{equation}
+
+If we denote the other coordinates on the right side by $z_k$ as in:
+\begin{equation}
+[u_1,v_1] \sqcup [u_2,v_2] \mapsto \left( z_1, ..., z_n , l_1 + l_2 \right)
+\end{equation}
+then we identify points on the right side with points in $\mathbb{R}^{2n+1}$,
+and we have:
+\begin{equation}
+z_k = \frac{(v_1^k - u_1^k) + (v_2^k - u_2^k)}{ik} \hspace{20pt} k = 1,...,n
+\end{equation}
+The generalization to more than 2 disjoint arcs is straightforward.
+These equations are used extensively in the functions `boundaryfromsphere()`
+and `arcsfromboundary()`,
+see the [Implicitization](../vignettes/implicitization.html) vignette.
+
+
+
+<br><br>
+
+# The Homeomorphism $\partial Z_n \to  \mathbb{S}^{2n}$
+
+$Z_n$ is a convex body so it is homeomorphic to the ball $B^{2n+1}$,
+and its boundary is homeomorphic to $\mathbb{S}^{2n}$.
+An explict map is trivial to construct.
+The center of $Z_n$ is $c = (0,...0,\pi)$ in the interior of $Z_n$.
+For $b \in \partial Z_n$ use the projection onto the unit sphere
+centered at $c$: $b \mapsto (b - c)/||b -c|| \in\mathbb{S}^{2n}$.
+This is computed in the function `spherefromboundary()`.
+
+The inverse $\mathbb{S}^{2n} \to \partial Z_n$ is much harder since now we
+are given a ray based at $c$ and must compute where that ray intersects $\partial Z_n$.
+This is computed iteratively in `boundaryfromsphere()`
+and depends on an implicit function for $\partial Z_n$,
+for details see the [Implicitization](../vignettes/implicitization.html) vignette.
+This function is only implemented for $n$ = 1, 2, and 3.
+
+The space of arcs $A_n$ has a natural involution $\gamma$,
+which is the complementation operation, given by
+$\gamma(V) = \operatorname{Cl}(\mathbb{S}^1 - V)$.
+The closure $\operatorname{Cl}$ is only necessary to create closed arcs.
+Note that if $V$ has $k$ disjoint closed arcs, then so does $\gamma(V)$.
+This involution is conjugate to the antipodal map on $\mathbb{S}^{2n}$
+under the composition $A_n \to \partial Z_n \to \mathbb{S}^{2n}$.
+These properties are discussed further in the
+[Real Projective Spaces and 3x3 Rotation Matrices](../vignettes/rotations.html) vignette.
+
+
+<br><br>
+
+# References
+
+<div id="refs"></div>
+
+
+
+<br><br>
+
+# Appendix - Logging
+
+Logging is performed using the package **logger**, see @logger.
+This is a powerful package that allows a separate configuration
+for logging from within **polarzonoid**, and that is what I have done.
+During package loading, the logging threshold is changed from `INFO` to `WARN`.
+To change it back again, one can execute:  
+`log_threshold( INFO, namespace="polarzonoid" )`
+
+The layout callback functions is customized;
+it adds the name of the calling function to the message.
+To install your own layout function, you can execute:  
+`log_layout( <your function>, namespace="polarzonoid" )`
+
+The appender callback functions is also customized;
+it comes to an immediate stop if the message level is `ERROR` or `FATAL`.
+To return to the default behavior, you can execute:  
+`log_appender( appender_console, namespace="polarzonoid" )`
+
+The formatter callback function is forced to be `formatter_sprintf()`;
+this should not be changed.
+
+
+
+<br><br>
+
+# Session Information
+
+This document was prepared
+`r format(Sys.Date(), "%a %b %d, %Y")`
+with the following configuration:
+<pre>
+```{r, echo=FALSE, results='asis'}
+options(old_opt)
+sessionInfo()
+```
+</pre>

@@ -1,0 +1,14 @@
+other
+*.gz
+*.zip
+*.bat
+*.pdf
+*.html
+vignettes/*.tex
+vignettes/*.bbl
+vignettes/*.log
+vignettes/figs
+vignettes/rotations_cache
+vignettes/rotations_file
+.RData
+.RHistory

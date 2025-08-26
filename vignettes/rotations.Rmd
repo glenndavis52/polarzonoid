@@ -1,0 +1,418 @@
+---
+title: "Real Projective Spaces and 3x3 Rotation Matrices"
+author: "Glenn Davis"
+date: "`r Sys.Date()`"
+
+header-includes:
+#  - \usepackage{tikz}
+  - \newcommand{\RP}{\mathbb{R}\text{P}}    
+  - \newcommand{\SOthree}{\text{SO(3)}}
+  
+output: 
+  rmarkdown::html_vignette: 
+    toc: true
+    toc_depth: 1
+    number_sections: false
+bibliography: bibliography.bib
+
+csl: personal.csl
+# csl: iso690-numeric-brackets-cs.csl
+# csl: institute-of-mathematical-statistics.csl
+# csl: transactions-on-mathematical-software.csl
+vignette: >
+  %\VignetteIndexEntry{Real Projective Spaces and 3x3 Rotation Matrices}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+
+```{css, echo=FALSE}
+body {
+  max-width: 725px;     /* make wider, default is 700px */
+}
+h1{
+  font-size: 20pt;    /* make the level 1 headers smaller */
+}
+```
+
+<script>
+function ToggleDiv(ID) {
+  var D = document.getElementById("D-" + ID);
+  var B = document.getElementById("B-" + ID);
+  if (D.style.display === "none") {
+    // open the div and change button text
+    D.style.display = "block";
+    B.innerText = "Hide " + ID;
+  } else {
+    // close the div and change button text
+    D.style.display = "none";
+    B.innerText = "Show " + ID;
+  }
+}
+</script>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+old_opt = options( width=144 )
+```
+
+<br><br>
+
+# Introduction
+
+```{r, echo=TRUE, message=FALSE}
+library(polarzonoid)
+```
+
+In this vignette, we define some configuration spaces of an even number of
+points on the circle, and show that they are homeomorphic
+to real projective spaces $\RP^n$.
+Since $\RP^3$ is homeomorphic to the group of 3x3 rotation matrices $\SOthree$,
+we also have a homeomorphism with that space.
+
+A prerequisite to understanding this vignette is the section on spaces of arcs
+$A_n$ in the  [User Guide](../vignettes/polarzonoid-guide.html) vignette.
+
+The current vignette is illustrated with some WebM video plots showing paths
+in the space of 2 or 4 points on the circle.
+The videos are made with help of the package **av** and this function:
+
+<button id="B-WebMfromrotationlist()" onclick="ToggleDiv('WebMfromrotationlist()')">
+Show WebMfromrotationlist()</button>
+<div id="D-WebMfromrotationlist()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+
+WebMfromrotationlist <- function( rotationlist, index=1L, framerate=10, vpsize=c(480,480) )
+    {
+    requireNamespace( 'av', quietly=TRUE )
+
+    # make temp folder
+    pathtemp = tempdir()   #  "./figs" ;   if( ! file.exists(pathtemp) ) dir.create(pathtemp)
+
+    count   = length( rotationlist )
+    
+    namevec = names( rotationlist )
+
+    for( k in 1:count )
+        {
+        filename    = sprintf( "%s/plot%03d.png", pathtemp, k )
+        png( filename=filename, width=vpsize[1], height=vpsize[2], units = "px" )
+        rotation3x3 = rotationlist[[k]] 
+        arcmat = arcsfromrotation( rotation3x3, tol=1.e-7 )
+        
+        plotarcs( arcmat, labels=FALSE, main=namevec[k], lwd=NA, cex=3, col='blue' )
+
+        rect( -0.83, -0.4, 0.83, 0.4, col='white', border='black' )
+        matlabel  = sprintf( "%+.4f", rotation3x3 )
+        matlabel  = gsub( '[+]', ' ', matlabel )
+        dim(matlabel) = c(3,3)
+        matlabel  = capture.output( print(matlabel,quote=FALSE) )
+        matlabel  = matlabel[-1]        # ignore the column labels
+        matlabel  = substr( matlabel, 5, 1000 )   # ignore the row labels
+        text( 0, c(0.3,0,-0.3), matlabel, adj=c(0.51,0.5), cex=1.5, family='mono' )
+        dev.off()
+        }
+
+    pathvec = dir( pathtemp, pattern="png$", full=T )
+    webm_file = sprintf( "%s/animation%g.webm", pathtemp, index )
+    out = av::av_encode_video( pathvec, output=webm_file, framerate=framerate, codec='libvpx-vp9', verbose=F )
+    res = file.remove( pathvec )  # cleanup the .PNG files, leaving just the .webm
+
+    return(out)
+    }
+```
+</div>
+
+<br>
+
+Embedding videos in the HTML output is done with the help of the package **base64enc** and this function:
+
+<button id="B-video2html()" onclick="ToggleDiv('video2html()')">Show video2html()</button>
+<div id="D-video2html()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+
+video2html  <- function( path, attributes="controls loop autoplay muted" )
+    {
+    requireNamespace( "base64enc", quietly=TRUE )
+    
+    i   = regexpr( "[.][a-z]+$", path, ignore.case=T )
+    if( i < 0 ) return('')
+    ext = substring( path, i+1 )    # extract the extension, and skip over the '.'
+    
+    part1   = sprintf( '<video %s src="data:video/%s;base64,\n', attributes, ext )
+    part2   = base64enc::base64encode( path, linewidth=120, newline='\n' )
+    part3   = '"></video>'
+    
+    return( paste0( part1, part2, part3, collapse='' ) )
+    }
+```
+</div>
+
+
+<br><br>
+
+# Two Natural Involutions
+
+The sphere $\mathbb{S}^{2n}$ has natural involution, the antipodal map,
+given by $\alpha(u) = -u$.
+
+The space of arcs $A_n$ has a natural involution $\gamma$,
+which is the complementation operation, given by
+$\gamma(V) = \operatorname{Cl}(\mathbb{S}^1 - V)$.
+The closure $\operatorname{Cl}$ is only necessary to create closed arcs.
+Note that $\gamma()$ has the important property that it leaves the arc endpoints fixed.
+
+It is easy to show that the homeomorphism 
+$A_n  ~ \longleftrightarrow  ~  \mathbb{S}^{2n}$
+conjugates these 2 involutions.
+We have a commutative diagram:
+
+```{tikz, tikz-ex, echo=FALSE, message=TRUE, scale=0.5, fig.align='center', fig.cap = "the involutions are conjugate", fig.ext='png', cache=TRUE}
+\usetikzlibrary{arrows}
+\begin{tikzpicture}[node distance=2cm, auto,>=latex', thin, scale=0.5]
+\node (P) {$A_n$};
+\node (B) [right of=P] {$S^{2n}$};
+\node (A) [below of=P] {$A_n$};
+\node (C) [below of=B] {$S^{2n}$};
+\draw[<->] (P) to node {} (B);
+\draw[->] (P) to node [swap] {$\gamma$} (A);
+\draw[<->] (A) to node [swap] {}  (C);
+\draw[->] (B) to node {$\alpha$} (C);
+\end{tikzpicture}
+```
+If we identify pairs of points for both spaces with the equivalence relation $\sim$,
+we get an induced homeomorphism
+$A_n/\sim  ~ \longleftrightarrow  ~  \mathbb{S}^{2n}/\sim$.
+The latter space is real projective space $\RP^{2n}$.
+Since $\gamma$ leaves the arc endpoints fixed,
+we can view a point in $A_n/\sim$ as simply the endpoints of the arcs;
+this is justified in the next section.
+
+
+<br><br>
+
+# The Space $P_{2n}$
+
+We define $P_{2n}$ to be the configuration space of $2n$ _or fewer and even_ number
+of points in the circle $\mathbb{S}^1$.
+So $P_2$ is the space of 2 points, $P_4$ is the space of 4 or 2 points, etc.
+We also define $P_0$ to be a single point.
+We have proper inclusions:
+\begin{equation}
+P_0 ~ \subset ~  P_2 ~  \subset ~  P_4 ~  \subset ~  P_6 ~ \subset ~  ...
+\end{equation}
+Given $2n$ distinct points in the circle, there are 2 sets of $n$ arcs that have these as endpoints.
+These 2 sets are complements of each other, which are identified under the above
+equivalence relation.
+Therefore $P_{2n}$ and $A_n / \sim$ are bijective as sets.
+We take the induced topology on $A_n / \sim$ and transfer it to $P_{2n}$.
+The important thing is that if 2 neighboring points of a configuration in
+$P_{2n}$ get close to each other,
+in the limit the point configuration converges to a configuration in $P_{2(n-1)}$
+where the 2 points of the configuration "disappear".
+Depending on how the arcs are selected, either the arc between the points shrinks to nothing,
+or the gap between two arcs shrinks to nothing and the two arcs are combined.
+In either case the number of arcs is reduced by 1.
+We saw in the previous section that there is a homeomorphism
+$A_n / \sim ~ \longleftrightarrow ~ \RP^{2n}$, and so there is a homeomorphism:
+\begin{equation}
+P_{2n}  ~ \longleftrightarrow  ~  \RP^{2n}
+\end{equation}
+
+**SIDE NOTE:**
+In particular we have $P_2  ~ \leftrightarrow  ~  \RP^2$.
+There is another configuration space of 2 points on the circle which is the
+cartesian product of two copies modulo the permutation of the points:
+$(\mathbb{S}^1 \times \mathbb{S}^1) / \sim$.
+This is given the quotient topology, so as 2 points converge to each other
+they become a single point.
+This configuration space is a M&ouml;ebius band, with boundary being those single points.
+If the boundary is collapsed to a point, we get $P_2  ~ \leftrightarrow  ~ \RP^2$.
+
+<br><br>
+
+# The Spaces $A_n^\pi$ and $P_{2n}^\pi$
+
+What about odd dimensions ?
+It turns out we can add a constraint that makes an interesting homeomorphism.
+Call a configuration of $n$ arcs _balanced_ if and only they have total length $\pi$.
+Note that if a configuration is balanced then its complement under $\gamma$
+is also balanced.
+Denote the subspace of balanced arc configurations by $A_n^\pi \subset A_n$.
+Viewed as points in $\partial Z_n  ~ \leftrightarrow  ~  \mathbb{S}^{2n}$
+this corresponds to intersecting the boundary of $Z_n$ with the hyperplane $L = \pi$.
+The intersection is a sphere of one lower dimension: $\mathbb{S}^{2n-1}$.
+Similarly, call a configuration of $2n$ points _balanced_ if and only if
+the generated arcs are balanced.
+There are 2 ways to choose these arcs, but if one way has total length $\pi$ then so does the other.
+Denote the subspace of balanced point configurations by $P^\pi_{2n} \subset P_{2n}$.
+We have homeomorphisms
+\begin{equation}
+A_n^\pi  ~ \longleftrightarrow  ~  \mathbb{S}^{2n-1}
+\hspace{20pt} \text{and} \hspace{20pt}
+P_{2n}^\pi  ~ \longleftrightarrow  ~  \RP^{2n-1}
+\end{equation}
+In particular when $n=2$ we have
+\begin{equation}
+P_{4}^\pi  ~ \longleftrightarrow  ~  \RP^{3}   ~ \longleftrightarrow  ~ \SOthree
+\end{equation}
+The second homeomorphism is well-known and is defined using the standard mapping
+from unit quaternions to 3x3 rotation matrices.
+In the following animations we generate a loop of rotations around a fixed axis,
+map the 3x3 rotation matrices to balanced configurations of 4 or 2 points in the circle,
+and plot them.
+The loops of rotations are generated with this function:
+
+<button id="B-circle_of_rotations()" onclick="ToggleDiv('circle_of_rotations()')">
+Show circle_of_rotations()</button>
+<div id="D-circle_of_rotations()" style="display: none">
+```{r, echo=TRUE, message=FALSE}
+circle_of_rotations <- function( axis, count=72+1 )
+    {
+    out     = vector( count, mode='list' )
+    namevec = character( count )
+    
+    for( i in 1:count )
+        {
+        theta_deg     = 360 * (i-1)/(count-1) 
+        theta         = pi/180 * theta_deg     # theta is in radians, starting at 0
+        out[[i]]      = rotationaroundaxis( axis, theta )
+        namevec[i]    = sprintf( "rotation around axis [%g,%g,%g]\ntheta=%g deg",
+                          axis[1], axis[2], axis[3], theta_deg )
+        }
+
+    names(out)  = namevec
+
+    return( out )
+    }
+```
+</div>
+**SIDE NOTE:**
+The above-mentioned configuration space for 3 points, using the quotient topology on
+$\mathbb{S}^1 {\times} \mathbb{S}^1 {\times} \mathbb{S}^1$,
+was shown to be homemorphic to $\mathbb{S}^3$ in @Bott1952.
+
+
+
+<br><br>
+
+# A Circle of Rotations around Axis [0,0,1]
+
+This animation start at the trivial identity matrix, which maps to the antipodal points $(0,\pm1)$.
+Then a circle of rotations around [0,0,1] are generated which return back to the identity again.
+The corresponding balanced configuration of points on the circle are plotted in blue.
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+circle      = circle_of_rotations( c(0,0,1), count=72+1 )
+webm_file   = WebMfromrotationlist( circle, index=1, vpsize=c(480,480) )
+video_html  = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of rotations around axis [0,0,1]
+</div>
+
+<br><br>
+
+# A Circle of Rotations around Axis [0,1,0]
+
+This animation start at the trivial identity matrix,
+and then a circle of rotations around [0,1,0] are generated which return back to the identity again.
+The corresponding balanced configuration of points on the circle are plotted in blue.
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+circle      = circle_of_rotations( c(0,1,0), count=72+1 )
+webm_file   = WebMfromrotationlist( circle, index=2, vpsize=c(480,480) )
+video_html  = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of rotations around axis [0,1,0]
+</div>
+
+<br><br>
+
+# A Circle of Rotations around Axis [1,0,0]
+
+This animation start at the trivial identity matrix,
+and then a circle of rotations around [1,0,0] are generated which return back to the identity again.
+The corresponding balanced configuration of points on the circle are plotted in blue.
+
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+circle      = circle_of_rotations( c(1,0,0), count=72+1 )
+webm_file   = WebMfromrotationlist( circle, index=3, vpsize=c(480,480) )
+video_html  = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of rotations around axis [1,0,0]
+</div>
+This case is different.
+There are only 2 antipodal points,
+and all these balanced point configurations are in $P_2^\pi \subset P_4^\pi$.
+
+
+<br><br>
+
+# A Circle of Rotations around a Random Axis
+
+This animation start at the trivial identity matrix,
+and then a random axis is generated, and then a loop of rotations around that axis
+is generated which return back to the identity again.
+The corresponding balanced configuration of points on the circle are plotted in blue.
+```{r, echo=TRUE, message=FALSE, warning=TRUE, fig.cap='caption', fig.keep='last', fig.show='hide', cache=FALSE }
+set.seed(0)
+axis        = rnorm(3)
+axis        = axis / sqrt( sum(axis^2) )
+circle      = circle_of_rotations( axis, count=72+1 )
+webm_file   = WebMfromrotationlist( circle, index=4, vpsize=c(480,480) )
+video_html  = video2html(webm_file)
+```
+
+<div style="text-align: center">
+```{r, echo=FALSE, message=TRUE, warning=TRUE }
+knitr::raw_html( video_html, meta=NULL, cacheable=FALSE )
+unlink( dirname(webm_file) )
+```
+circle of rotations around a random axis
+</div>
+
+
+<br><br>
+
+# References
+
+<div id="refs"></div>
+
+
+
+
+<br><br>
+
+
+
+
+# Session Information
+
+This document was prepared
+`r format(Sys.Date(), "%a %b %d, %Y")`
+with the following configuration:
+<pre>
+```{r, echo=FALSE, results='asis'}
+options(old_opt)
+sessionInfo()
+```
+</pre>

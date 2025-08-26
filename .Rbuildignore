@@ -1,0 +1,11 @@
+^other/.+
+^.+[.]gz$
+^.+[.]bat$
+^[^/]+[.]html$
+^vignettes/.+[.]pdf$
+^vignettes/[^/]+[.]html$
+^vignettes/.+[.]tex$
+^vignettes/.+[.]bbl$
+^vignettes/.+[.]log$
+[.]RData$
+[.]Rhistory$

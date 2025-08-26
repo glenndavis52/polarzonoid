@@ -1,0 +1,32 @@
+
+export (
+arcsfromboundary,
+arcsfromsphere,
+arcsfromrotation,
+arcsintersection,
+arcssymmdiff,
+arcsunion,
+arcsdistance,
+boundaryfromarcs,
+boundaryfromsphere,
+complementaryarcs,
+disjointarcs,
+plotarcs,
+rotationaroundaxis,
+rotationfromarcs,
+slerp,
+spherefromarcs,
+spherefromarcs_plus,
+spherefromboundary,
+support,
+trigpolyroot
+)
+
+
+import( logger )
+importFrom( utils, str )
+importFrom( stats, runif )
+importFrom( graphics, abline, grid, points, polygon,
+            lines, text, title, plot.default )
+
+
