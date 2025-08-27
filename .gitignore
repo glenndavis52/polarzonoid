@@ -12,3 +12,4 @@ vignettes/rotations_cache
 vignettes/rotations_file
 .RData
 .RHistory
+.Rbuildignore
